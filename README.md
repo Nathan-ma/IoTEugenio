@@ -1,10 +1,5 @@
-> # Version 0.0.2
+> # Version 0.0.3
 ---
 > ## Changes:
-> - Sensor* and Pump classes Removed.
-> - MQTT Class Added.
-> - QRCode Reader Class Added.
-> - BoardType Defined as ESP32Cam.
-> - Motor Class Added.
-> - Network Class Added.
-> - Debug Class Added.
+> - Testing MQTT
+> - Creating a mock function to send paper_amount and qrcode to the server.

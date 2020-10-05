@@ -10,6 +10,10 @@
 #undef log_i
 #undef log_d
 #undef LOG_FORMAT
+#undef LOG_BOLD
+#undef LOG_COLOR_V
+#undef LOG_COLOR_W
+#undef LOG_COLOR_D
 
 #define LOG_LEVEL_NONE (0)
 #define LOG_LEVEL_ERROR (1)
@@ -18,9 +22,6 @@
 #define LOG_LEVEL_DEBUG (4)
 #define LOG_LEVEL_VERBOSE (5)
 
-#ifndef CONFIG_LOG_COLORS
-#define CONFIG_LOG_COLORS 0
-#endif
 
 #if CONFIG_LOG_COLORS
 //#define LOG_COLOR_BLACK "30"

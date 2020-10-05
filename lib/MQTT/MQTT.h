@@ -37,22 +37,21 @@ class MQTTClass {
   /** @brief Connects to MQTT Broker */
   bool connect();
 
+ public:
+  /* Constructor */
+  MQTTClass() : mqtt(secureClient), Debug("MQTT") {}
+
+  /* Methods */
+  /** @brief Try to stablishs the mqtt connection */
+  void setup();
+
   /** @brief            Send data to a topic
    *  @param[out] root  Json Object to be send
    */
   void sendData(JsonObject& root);
 
- public:
-  /* Constructor */
-  MQTTClass() : mqtt(secureClient), Debug("MQTT") {
-    secureClient.setCACert(ca_cert);
-    secureClient.setCertificate(client_cert);  // for client verification
-    secureClient.setPrivateKey(privkey);
-  }
-
-  /* Methods */
-  /** @brief Try to stablishs the mqtt connection */
-  void setup();
+  /** @brief Updates MQTT */
+  void loop() { mqtt.loop(); }
 };
 
 extern MQTTClass MQTT;

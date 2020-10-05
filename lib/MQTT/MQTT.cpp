@@ -28,6 +28,7 @@ void MQTTClass::pubSubErr(int8_t MQTTErr) {
 
 /** @brief Defines the server and the Callback function */
 void MQTTClass::defineService() {
+  Debug.print("Defining Service -> \nServer : %s \nPort %d", MQTT_HOST, MQTT_PORT);
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
   //TODO Declare the Callback
   //mqtt.setCallback(MQTTClass::cbRecieved);
@@ -42,7 +43,6 @@ bool MQTTClass::connect() {
     String temp = String(MQTT_HOST) + "/" + String(MQTT_USER) + "/api-version=2017-06-30";
     mqtt_user = temp;
   }
-
   if (mqtt.connect(MQTT_USER, mqtt_user.c_str(), NULL)) {
     Debug.print("Connected");
     return true;
@@ -57,26 +57,15 @@ bool MQTTClass::connect() {
   }
 }
 
-/** @brief            Send data to a topic
- *  @param[out] root  Json Object to be send
- */
-void MQTTClass::sendData(JsonObject& root) {
-  String target;
-  {
-    String mqtt_pub_topic = "devices/" + String(MQTT_USER) + "/messages/events/";
-    target = mqtt_pub_topic;
-  }
-  char payload[measureJson(root) + 1];
-  serializeJson(root, payload, sizeof(payload));
-  if (!mqtt.publish(target.c_str(), payload, false)) {
-    pubSubErr(mqtt.state());
-  }
-}
-
 /* ========== Public =========== */
 
 /** @brief Try to stablishs the mqtt connection */
 void MQTTClass::setup() {
+  secureClient.setCACert(ca_cert);
+  secureClient.setCertificate(client_cert);  // for client verification
+  secureClient.setPrivateKey(privkey);
+  /* Defines Information about the server */
+  defineService();
   /* Informa the board is trying to connect */
   Debug.print("Connecting");
   connect();
@@ -87,6 +76,27 @@ void MQTTClass::setup() {
       Debug.print("I think it is connected");
       break;
     }
+  }
+}
+
+/** @brief            Send data to a topic
+ *  @param[out] root  Json Object to be send
+ */
+void MQTTClass::sendData(JsonObject& root) {
+  String target;
+  {
+    String mqtt_pub_topic = "devices/" + String(MQTT_USER) + "/messages/events/";
+    target = mqtt_pub_topic;
+  }
+    
+  char payload[measureJson(root) + 1];
+  serializeJson(root, payload, sizeof(payload));
+  Debug.warn("Sending -> %s", payload);
+  Debug.warn("to Topic -> %s", target.c_str());
+  if (!mqtt.publish(target.c_str(), payload, false)) {
+    pubSubErr(mqtt.state());
+  } else {
+    Debug.print("Message Sent Successfully");
   }
 }
 
