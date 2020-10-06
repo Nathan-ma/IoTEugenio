@@ -1,5 +1,30 @@
 #include "MQTT.h"
 
+#include <Motor.h>
+
+DebugClass DebugStatic("MQTT");
+
+eugenio_info_t EugenioData;
+
+/* =========== Static ============ */
+void MQTTClass::messageReceived(char *topic, byte *payload, unsigned int length) {
+  String message;
+  {
+    std::string temp((char *)payload, length);
+    message = temp.c_str();
+  }
+
+  /* Handles Payload */
+  message.remove(0, 0);
+  message.remove(message.length());
+  message.replace("\\", "");
+
+  DebugStatic.warn("Recieving -> \nfrom Topic[%s]", topic);
+  DebugStatic.warn("Payload -> %s", message.c_str());
+  
+  MQTT.handleMethods(message);
+}
+
 /* =========== Private =========== */
 
 /** @brief Translate MQTT Erorr Code */
@@ -30,11 +55,12 @@ void MQTTClass::pubSubErr(int8_t MQTTErr) {
 void MQTTClass::defineService() {
   Debug.print("Defining Service -> \nServer : %s \nPort %d", MQTT_HOST, MQTT_PORT);
   mqtt.setServer(MQTT_HOST, MQTT_PORT);
-  //TODO Declare the Callback
-  //mqtt.setCallback(MQTTClass::cbRecieved);
+  mqtt.setCallback(MQTTClass::messageReceived);
 }
 
-/** @brief Connects to MQTT Broker */
+/** @brief Connects to MQTT Broker 
+ *  @return true if Success
+ */
 bool MQTTClass::connect() {
   /* Declares mqtt_user */
   String mqtt_user;
@@ -57,6 +83,45 @@ bool MQTTClass::connect() {
   }
 }
 
+/** @brief  Subscribe to a MQTT topic 
+ *  @return true if subscribed 
+ */
+bool MQTTClass::subscribe() {
+  Debug.print("Subscribing");
+  if (!mqtt.subscribe(MQTT_SUB)) {
+    pubSubErr(mqtt.state());
+    return false;
+  }
+  return true;
+}
+
+/** @brief                Handles Methods and payload recieved
+ *  @param[in]  payload   Recieved payload
+ */
+void MQTTClass::handleMethods(String &payload) {
+  if (payload.equals("")) {
+    Debug.warn("Empty Payload Received, prob a Ping");
+    return;
+  }
+
+  {
+    StaticJsonDocument<512> doc;
+    auto err = deserializeJson(doc, payload.c_str());
+    if (err) {
+      Debug.error(F("deserializeJson() failed: "));
+      Debug.error(err.c_str());
+    }
+    Serial.println();
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
+    EugenioData.customer_id = doc["customer_id"].as<String>();
+    EugenioData.selectPerfume = doc["select_perfume"].as<int>();
+  }
+
+  
+  MotorClass::selectPerfume(EugenioData.selectPerfume);
+}
+
 /* ========== Public =========== */
 
 /** @brief Try to stablishs the mqtt connection */
@@ -77,18 +142,19 @@ void MQTTClass::setup() {
       break;
     }
   }
+  subscribe();
 }
 
 /** @brief            Send data to a topic
  *  @param[out] root  Json Object to be send
  */
-void MQTTClass::sendData(JsonObject& root) {
+void MQTTClass::sendData(JsonObject &root) {
   String target;
   {
     String mqtt_pub_topic = "devices/" + String(MQTT_USER) + "/messages/events/";
     target = mqtt_pub_topic;
   }
-    
+
   char payload[measureJson(root) + 1];
   serializeJson(root, payload, sizeof(payload));
   Debug.warn("Sending -> %s", payload);
@@ -99,7 +165,5 @@ void MQTTClass::sendData(JsonObject& root) {
     Debug.print("Message Sent Successfully");
   }
 }
-
-// TODO Something to build the data package and use the private method so we can send the informations
 
 MQTTClass MQTT;

@@ -1,5 +1,4 @@
-> # Version 0.0.3
+> # Version 0.0.4
 ---
 > ## Changes:
-> - Testing MQTT
-> - Creating a mock function to send paper_amount and qrcode to the server.
+> - Finishing Response and integration with Eugenio.

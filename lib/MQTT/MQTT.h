@@ -6,6 +6,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <Debug.h>
+#include <DataSet.h>
 #include "secrets.h"
 
 #ifndef MQTT_HOST
@@ -20,6 +21,10 @@
 #define MQTT_PORT 8883
 #endif
 
+#ifndef MQTT_SUB
+#define MQTT_SUB "$iothub/methods/POST/#"
+#endif
+
 class MQTTClass {
  private:
   /* Instances */
@@ -28,15 +33,29 @@ class MQTTClass {
   DebugClass Debug;
 
   /* Methods */
+  /** @brief Static method for subscription */
+  static void messageReceived(char * topic, byte* payload, unsigned int length);
+
   /** @brief Translate MQTT Erorr Code */
   void pubSubErr(int8_t MQTTErr);
 
   /** @brief Defines the server and the Callback function */
   void defineService();
 
-  /** @brief Connects to MQTT Broker */
+  /** @brief Connects to MQTT Broker 
+   *  @return true if Success
+   */
   bool connect();
+  
+  /** @brief  Subscribe to a MQTT topic 
+   *  @return true if subscribed 
+   */
+  bool subscribe();
 
+  /** @brief                Handles Methods and payload recieved
+   *  @param[in]  payload   Recieved payload
+   */
+  void handleMethods(String& payload);
  public:
   /* Constructor */
   MQTTClass() : mqtt(secureClient), Debug("MQTT") {}
@@ -55,5 +74,5 @@ class MQTTClass {
 };
 
 extern MQTTClass MQTT;
-
+extern eugenio_info_t EugenioData;
 #endif

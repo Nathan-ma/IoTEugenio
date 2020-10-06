@@ -3,7 +3,10 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <DataSet.h>
 
-void testMockSchema();
+extern eugenio_info_t EugenioData;
+
+void sendToEugenio();
 
 #endif
